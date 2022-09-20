@@ -9,6 +9,22 @@ db= SQLAlchemy(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost:3306/swiftcode'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+class app_user(db.Model):
+    __tablename__ = "app_user"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String)
+    legal_terms_agreed = db.Column(db.Integer)
+    password = db.Column(db.String)
+    role = db.Column(db.String)
+    resume_submitted = db.Column(db.Integer)
+    candidate_information_id = db.Column(db.Integer)
+    s3bucket = db.relationship('s3bucket', backref = 'app_user', cascade = 'all, delete-orphan', lazy = 'dynamic')
+
+class S3Bucket(db.Model):
+    __tablename__ = "s3bucket"
+    id = db.Column(db.Integer, db.ForeignKey('app_user.id'), nullable=False)
+    link = db.Column(db.String)
+
 s3 = boto3.client('s3',
                     aws_access_key_id=keys.ACCESS_KEY_ID,
                     aws_secret_access_key= keys.ACCESS_SECRET_KEY,
@@ -30,7 +46,7 @@ def upload():
                 resume.save(filename)
                 s3.upload_file(
                     Bucket = BUCKET_NAME,
-                    Filename=filename,
+                    Filename = filename,
                     Key = filename
                 )
                 msg = "Upload Done ! "
